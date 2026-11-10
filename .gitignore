@@ -1,0 +1,22 @@
+# 生成物与本地环境
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# 实验产物（每个人自己的实验数据，不入库）
+content.json
+experiment_report.docx
+实验报告.docx
+*.docx
+_preview/
+shots/
+figs/
+*.log.txt
+env_table.md
+
+# 系统文件
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

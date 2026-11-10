@@ -1,0 +1,253 @@
+{
+  "meta": {
+    "school": "",
+    "course": "数据库原理与应用",
+    "title": "实验三　学生选课数据库的设计与实现",
+    "college": "计算机科学与技术学院",
+    "class_name": "计算机 2301 班",
+    "student": "张三",
+    "student_id": "2023010101",
+    "teacher": "李老师",
+    "date": "2026 年 10 月 24 日"
+  },
+  "options": {
+    "cover": true,
+    "toc": true,
+    "numbering": true,
+    "header_text": "《数据库原理与应用》实验报告"
+  },
+  "sections": [
+    {
+      "heading": "实验目的",
+      "blocks": [
+        {
+          "type": "list",
+          "ordered": true,
+          "items": [
+            "掌握 E-R 模型到关系模式的转换方法，能够独立完成一个小型数据库的概念设计与逻辑设计。",
+            "熟练使用 SQL 语句完成建库、建表、约束定义和基础数据维护。",
+            "理解主键、外键与参照完整性的作用，能通过多表连接查询完成统计类需求。"
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "实验环境",
+      "blocks": [
+        {
+          "type": "para",
+          "text": "本次实验在个人笔记本上完成，操作系统为 macOS 14，数据库使用 SQLite 3.43（课程环境为 MySQL 8.0，两者 SQL 语法基本一致，建表部分只涉及通用语法）。具体环境如下表所示。"
+        },
+        {
+          "type": "table",
+          "caption": "实验环境",
+          "columns": [
+            "项目",
+            "版本 / 配置",
+            "说明"
+          ],
+          "widths": [
+            3.6,
+            5.2,
+            6.0
+          ],
+          "first_col_left": true,
+          "rows": [
+            [
+              "操作系统",
+              "macOS 14.5",
+              "64 位"
+            ],
+            [
+              "数据库",
+              "SQLite 3.43.2",
+              "命令行客户端 sqlite3"
+            ],
+            [
+              "编程语言",
+              "Python 3.13.12",
+              "仅用于生成测试数据"
+            ],
+            [
+              "开发工具",
+              "VS Code 1.92",
+              "SQL 插件高亮"
+            ],
+            [
+              "字符集",
+              "UTF-8",
+              "建库时指定"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "实验内容与原理",
+      "blocks": [
+        {
+          "type": "para",
+          "text": "实验要求围绕「学生—课程—选课」这一典型场景设计数据库。一个学生可以选修多门课程，一门课程可以被多个学生选修，因此学生与课程之间是 m:n 联系，需要引入选课表 sc 作为联系集，并把成绩作为该联系的属性。"
+        },
+        {
+          "type": "para",
+          "text": "概念设计阶段使用 E-R 图描述实体与联系，逻辑设计阶段把每个实体转换为一张关系表，m:n 联系单独转换为一张表，其主键由两端实体的主键组合而成。"
+        },
+        {
+          "type": "image",
+          "path": "figs/er.png",
+          "caption": "选课系统 E-R 图",
+          "width_cm": 14.0
+        },
+        {
+          "type": "para",
+          "text": "按照转换规则，得到三个关系模式，其中下划线部分为主键："
+        },
+        {
+          "type": "list",
+          "items": [
+            "学生（**学号**，姓名，性别，院系）",
+            "课程（**课程号**，课程名，学分）",
+            "选课（**学号，课程号**，成绩）"
+          ]
+        },
+        {
+          "type": "flow_table",
+          "caption": "数据库设计流程",
+          "steps": [
+            "需求分析",
+            "概念设计",
+            "逻辑设计",
+            "物理实现"
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "实验步骤",
+      "blocks": [
+        {
+          "type": "step",
+          "title": "（1）创建数据库与数据表",
+          "text": "在命令行启动 sqlite3，依次创建三张表，并为 sc 表添加复合主键和外键约束。"
+        },
+        {
+          "type": "code",
+          "caption": "建表语句",
+          "text": "CREATE TABLE student (\n    sno   CHAR(10) PRIMARY KEY,\n    sname VARCHAR(20) NOT NULL,\n    ssex  CHAR(2)  CHECK (ssex IN ('男', '女')),\n    dept  VARCHAR(30)\n);\n\nCREATE TABLE course (\n    cno    CHAR(8) PRIMARY KEY,\n    cname  VARCHAR(40) NOT NULL,\n    credit DECIMAL(3, 1) CHECK (credit > 0)\n);\n\nCREATE TABLE sc (\n    sno   CHAR(10),\n    cno   CHAR(8),\n    grade DECIMAL(5, 1) CHECK (grade BETWEEN 0 AND 100),\n    PRIMARY KEY (sno, cno),\n    FOREIGN KEY (sno) REFERENCES student(sno),\n    FOREIGN KEY (cno) REFERENCES course(cno)\n);",
+          "lang": "sql"
+        },
+        {
+          "type": "step",
+          "title": "（2）插入测试数据",
+          "text": "为方便验证查询结果，插入 6 名学生、4 门课程和 12 条选课记录。"
+        },
+        {
+          "type": "code",
+          "caption": "插入数据",
+          "text": "INSERT INTO student VALUES\n('2023010101', '张三', '男', '计算机系'),\n('2023010102', '李四', '女', '计算机系'),\n('2023010103', '王五', '男', '软件工程系'),\n('2023010104', '赵六', '女', '软件工程系'),\n('2023010105', '钱七', '男', '计算机系'),\n('2023010106', '孙八', '女', '网络工程系');\n\nINSERT INTO course VALUES\n('C001', '数据库原理', 4.0),\n('C002', '数据结构', 5.0),\n('C003', '操作系统', 4.0),\n('C004', '计算机网络', 3.0);",
+          "lang": "sql"
+        },
+        {
+          "type": "step",
+          "title": "（3）执行查询",
+          "text": "编写连接查询统计每门课程的选课人数和平均分，并按平均分降序排列。"
+        },
+        {
+          "type": "code",
+          "caption": "统计查询",
+          "text": "SELECT c.cname,\n       COUNT(sc.sno)      AS cnt,\n       ROUND(AVG(sc.grade), 1) AS avg_grade\nFROM course c\nJOIN sc ON c.cno = sc.cno\nGROUP BY c.cno, c.cname\nORDER BY avg_grade DESC;",
+          "lang": "sql"
+        }
+      ]
+    },
+    {
+      "heading": "实验结果",
+      "blocks": [
+        {
+          "type": "para",
+          "text": "建表完成后使用 .schema 命令查看表结构，可以确认主键、外键和 CHECK 约束都已生效，运行结果如下图所示。"
+        },
+        {
+          "type": "image",
+          "path": "shots/fib.png",
+          "caption": "查看表结构",
+          "width_cm": 14.0
+        },
+        {
+          "type": "para",
+          "text": "执行统计查询后返回 4 行结果，各门课程人数与平均分如下，其中「数据结构」平均分最高。"
+        },
+        {
+          "type": "image",
+          "path": "shots/demo.png",
+          "caption": "统计查询运行结果",
+          "width_cm": 14.0
+        },
+        {
+          "type": "para",
+          "text": "为验证外键约束，向 sc 表插入一条学号不存在的记录，数据库报 FOREIGN KEY constraint failed，说明参照完整性起作用。"
+        },
+        {
+          "type": "image",
+          "path": "shots/fib.png",
+          "caption": "外键约束测试",
+          "width_cm": 14.0
+        },
+        {
+          "type": "table",
+          "caption": "查询结果汇总",
+          "columns": [
+            "课程名称",
+            "选课人数",
+            "平均分"
+          ],
+          "widths": [
+            6.0,
+            4.0,
+            4.0
+          ],
+          "rows": [
+            [
+              "数据结构",
+              "3",
+              "88.3"
+            ],
+            [
+              "数据库原理",
+              "4",
+              "84.5"
+            ],
+            [
+              "操作系统",
+              "3",
+              "79.0"
+            ],
+            [
+              "计算机网络",
+              "2",
+              "76.5"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "实验总结",
+      "blocks": [
+        {
+          "type": "para",
+          "text": "这次实验主要是把课上讲的 E-R 图转换规则真正写成了 SQL。刚开始建 sc 表的时候只写了普通主键，结果插数据时同一个学生选多门课就报错，后来改成 (sno, cno) 复合主键才通过，算是真正理解了「联系集的主键由两端实体主键组成」这句话。"
+        },
+        {
+          "type": "para",
+          "text": "另一个卡住的地方是删除课程的时候报外键错误，查了资料才知道要先删 sc 里的记录，或者在定义外键时加 ON DELETE CASCADE。我没有加级联删除，而是在删除前先清理选课记录，感觉这样更安全一些。"
+        },
+        {
+          "type": "para",
+          "text": "统计查询的 GROUP BY 写得还不太熟练，一开始把 cname 放在 SELECT 里却没有写进 GROUP BY，虽然 SQLite 不报错，但换成 MySQL 严格模式就会失败。后面补上了分组字段，查询结果和预期一致。总体来说实验完成了要求，但索引优化部分没来得及做，后续想再试试给 sc 表的 cno 加索引看看执行计划有什么变化。"
+        }
+      ]
+    }
+  ]
+}
